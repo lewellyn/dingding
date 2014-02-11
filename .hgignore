@@ -1,0 +1,11 @@
+glob:deps/
+glob:_rel/
+glob:ebin/
+glob:relx
+glob:rebar
+glob:priv/dd.db
+glob:priv/httpc_api__cookie_db
+glob:doc/
+glob:.fossil-settings
+glob:.fslckout
+
