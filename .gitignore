@@ -1,0 +1,12 @@
+deps/
+_rel/
+ebin/
+relx
+rebar
+priv/dd.db
+priv/httpc_api__cookie_db
+doc/
+.fossil-settings
+.fslckout
+.hgignore
+.hg/

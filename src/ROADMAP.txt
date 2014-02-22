@@ -1,0 +1,33 @@
+- !lyse command.
+- Follow the github erlang repo and post important updates.
+- follow the #erlang hashtag on twitter and post the updates to the channel.
+- Add DCC support so the bot can send/receive files.
+- Add simple delay after sending a message to IRC server to prevent flooding.
+
+
+A way to check if a module implements a behaviour:
+dd_connection:module_info(attributes).
+[{vsn,[217146057478470812520104193448891454124]},
+ {behaviour,[gen_server]}]
+
+Different behaviours?
+Could implement one that is basicly a gen_server so that it can have local state.
+
+make a webbased frontend (or staticly generated paged) for the links dingding stores in the db.
+For this we first need to get the db to work properly.
+
+URL storing could be done with the URL as primary key, so that every url only gets reported once to the RSS feed.
+
+Add Luerl scripting capabilities to dingd1ng?
+
+URL handler module needs to be completely reworked in order to use the new db functionality.
+Get the title of the URL first, then do everything else.
+Since we need the title in so many places.
+
+
+ {modules, [{"#channel", [mod1, mod2]}, {"#channel", [mod1, mod2]}...
+ then {channel_modules, } ..
+ So modules per channel, not channel per module.
+ For ease of config, I could include a 'standard_modules' section, for modules that work on all channels?
+ server_modules, channel_modules
+
