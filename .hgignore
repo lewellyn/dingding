@@ -8,4 +8,5 @@ glob:priv/httpc_api__cookie_db
 glob:doc/
 glob:.fossil-settings
 glob:.fslckout
-
+glob:.gitignore
+glob:.git/
