@@ -39,9 +39,12 @@ handle_msg(ReplyPid, _Prefix, <<"001">>, _Args, _Tail) ->
 handle_msg(_ReplyPid, _Prefix, <<"330">>, [_, Nick, Login], <<"is logged in as">>) ->
     ets:insert(logindata, {Nick, freenode, Login}),
     ok;
-handle_msg(ReplyPid, Prefix, <<"JOIN">>, _Args, <<_Rest/binary>>) ->
-    Nick = dd_ircmsg:nick_from_prefix(Prefix),
-    dd_helpers:request_whois(ReplyPid, Nick);
+handle_msg(_ReplyPid, Prefix, <<"PART">>, _Args, <<_Rest/binary>>) ->
+    remove_nick(Prefix);
+handle_msg(_ReplyPid, Prefix, <<"QUIT">>, _Args, <<_Rest/binary>>) ->
+    remove_nick(Prefix);
+handle_msg(_ReplyPid, Prefix, <<"NICK">>, _Args, <<_Rest/binary>>) ->
+    remove_nick(Prefix);
 handle_msg(_ReplyPid, _Prefix, _Command, _Args, _Tail) ->
     ok.
 
@@ -57,6 +60,14 @@ nick_is_logged_in_as(ReplyPid, Nick) ->
         [[Login]] -> Login
     end.
 
+remove_nick(Prefix) ->
+    Nick = dd_ircmsg:nick_from_prefix(Prefix),
+    ets:delete(logindata, Nick),    
+    ok.
+
+%% {ircmsg,<<"hobana.freenode.net">>,<<"263">>,
+%%         [<<"dingd2ng">>,<<"WHOIS">>],
+%%         <<"This command could not be completed because it has been used recently, and is rate-limited.">>}
 
 %% REPLY FOR A WHOIS ON FREENODE:
 %% {ircmsg,<<"pratchett.freenode.net">>,<<"311">>,

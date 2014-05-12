@@ -11,7 +11,7 @@
 -compile(export_all).
 -export([get_tweet/1, auth_header/0, get_usertimeline_tweet/1, reply_with_tweet/3, get_tweets/1, tweet_to_line/1, tweet/2]).
 
--define(SingleTweetPattern, "https://twitter.com/(\\w*)/status\\w?\\w?/(\\d*)").
+-define(SingleTweetPattern, "https?://twitter.com/(\\w*)/status\\w?\\w?/(\\d*)").
 
 get_with_auth(URL) ->
     {ok, {_,_, JSON}} = httpc:request(get, {URL, [auth_header()]}, [], []),
@@ -114,6 +114,8 @@ test_tweetpattern() ->
     re:run(URL, Regex, [{capture, all_but_first, binary}]).
 
 cleanup(Line) ->
+    {ok, LF} = re:compile("\r", [caseless]),
+    {ok, NL} = re:compile("\n", [caseless]),
     {ok, Gt} = re:compile("&gt;", [caseless]),
     {ok, Lt} = re:compile("&lt;", [caseless]),
     {ok, Amp} = re:compile("&amp;", [caseless]),
@@ -127,7 +129,9 @@ cleanup(Line) ->
                  {Gt, ">"},
                  {Lt, "<"},
                  {Quot, "\""},
-                 {Apos, "'"}
+                 {Apos, "'"},
+                 {LF, " "},
+                 {NL, " "}
                  ]).
 
 
@@ -184,8 +188,8 @@ retweet(Nick, ID) ->
 sendtweet(Nickname, Text) ->
     Prefix = "<"++Nickname++"> ",
 %%    Max140 = string:substr(Prefix++Text, 1, 140),
-    Max140 = Prefix++Text,
-    post_with_auth([{"status", Max140},{"trim_user", "true"}]).
+%%    Max140 = Prefix++Text,
+    post_with_auth([{"status", Text},{"trim_user", "true"}]).
 
 shorten_urls(Text) ->
     Parts = string:tokens(Text, " "),
