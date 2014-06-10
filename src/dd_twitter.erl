@@ -9,7 +9,7 @@
 -module(dd_twitter).
 
 -compile(export_all).
--export([get_tweet/1, auth_header/0, get_usertimeline_tweet/1, reply_with_tweet/3, get_tweets/1, tweet_to_line/1, tweet/2]).
+-export([get_tweet/1, auth_header/0, get_usertimeline_tweet/1, reply_with_tweet/3, get_tweets/1, tweet_to_line/1, tweet/2, is_tweet/1]).
 
 -define(SingleTweetPattern, "https?://twitter.com/(\\w*)/status\\w?\\w?/(\\d*)").
 
@@ -71,15 +71,23 @@ handle_twitter_usertimeline(ReplyPid, Args, Username) ->
       || Tweet <- [ get_usertimeline_tweet(Twt) || Twt <- TwtList ]],
     ok.
 
--spec reply_if_single_tweet(binary()) -> ok | false.
-reply_if_single_tweet(URL) ->
-    io:format("Checking for single tweet"),
+-spec is_tweet(URL :: binary()) -> {true, binary()} | false.
+is_tweet(URL) ->
     {ok, Regex} = re:compile(?SingleTweetPattern, [caseless]),
     case re:run(URL, Regex, [{capture, all_but_first, binary}]) of
         {match, [_, TweetID]} ->
-            get_tweet(TweetID);
+            {true, TweetID};
         _ -> false
     end.
+
+
+-spec reply_if_single_tweet(binary()) -> ok | false.
+reply_if_single_tweet(URL) ->
+    case is_tweet(URL) of
+        {true, TweetID} -> get_tweet(TweetID);
+        false -> false
+    end.
+
 
 get_tweet_id_from_line(Line) ->
     {ok, Regex} = re:compile(?SingleTweetPattern, [caseless]),
