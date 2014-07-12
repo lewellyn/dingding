@@ -10,3 +10,4 @@ glob:.fossil-settings
 glob:.fslckout
 glob:.gitignore
 glob:.git/
+glob:config/

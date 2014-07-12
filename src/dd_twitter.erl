@@ -21,7 +21,7 @@ get_tweet(TweetID) when is_binary(TweetID) ->
     get_tweet(binary_to_list(TweetID));
 get_tweet(TweetID) ->
     %% changed password and removed it from the source code. D'oh!.
-    URL = "http://127.0.0.1:8088/1.1/statuses/show.json?id="++TweetID,
+    URL = "http://127.0.0.1:8080/1.1/statuses/show.json?id="++TweetID,
     JSON = get_with_auth(URL),
     get_usertimeline_tweet(mochijson:decode(JSON)).
 
@@ -64,7 +64,7 @@ tweet_to_line({struct, P}) ->
 
 -spec handle_twitter_usertimeline(pid(), [binary()], binary()) -> ok.
 handle_twitter_usertimeline(ReplyPid, Args, Username) ->
-    URL = "http://127.0.0.1:8088/1.1/statuses/user_timeline.json?count=2&screen_name="++edoc_lib:escape_uri(binary_to_list(Username)),
+    URL = "http://127.0.0.1:8080/1.1/statuses/user_timeline.json?count=2&screen_name="++edoc_lib:escape_uri(binary_to_list(Username)),
     JSON = get_with_auth(URL),
     {array, TwtList} = mochijson:decode(JSON),
     [ spawn(fun() -> reply_with_tweet(Tweet, ReplyPid, Args) end)
@@ -103,7 +103,7 @@ retweet_from_url(URL) ->
     ok.
 
 tst() ->
-    URL = "http://127.0.0.1:8088/1.1/statuses/user_timeline.json?count=2&screen_name=G3rtm",
+    URL = "http://127.0.0.1:8080/1.1/statuses/user_timeline.json?count=2&screen_name=G3rtm",
     JSON = get_with_auth(URL),
     io:format("Decoding"),
     {array, TwtList} = mochijson:decode(JSON),
@@ -145,7 +145,7 @@ cleanup(Line) ->
 
 post_with_auth(Data) ->
     Method = post,
-    URL = "http://127.0.0.1:8088/1.1/statuses/update.json",
+    URL = "http://127.0.0.1:8080/1.1/statuses/update.json",
     Header = [auth_header()],
     Type = "application/x-www-form-urlencoded",
     Body = url_encode(Data),
@@ -172,7 +172,7 @@ return_id(RBody) ->
     proplists:get_value("id", Tweet).
 
 retweetpost(ID) ->
-    httpc:request(post, {"http://127.0.0.1:8088/1.1/statuses/retweet/"++ID++".json", [auth_header()], "application/x-www-form-urlencoded", []}, [], []).
+    httpc:request(post, {"http://127.0.0.1:8080/1.1/statuses/retweet/"++ID++".json", [auth_header()], "application/x-www-form-urlencoded", []}, [], []).
 
 tweet(Nickname, Text) when is_binary(Nickname) ->
     tweet(binary_to_list(Nickname), Text);
@@ -189,7 +189,7 @@ retweet(Nick, TweetID) when is_binary(TweetID) ->
 retweet(Nick, ID) ->
     case nick_allowed_to_tweet(Nick) of
         true ->
-            httpc:request(post, {"http://127.0.0.1:8088/1.1/statuses/retweet/"++ID++".json", [auth_header()], "application/x-www-form-urlencoded", []}, [], []);
+            httpc:request(post, {"http://127.0.0.1:8080/1.1/statuses/retweet/"++ID++".json", [auth_header()], "application/x-www-form-urlencoded", []}, [], []);
         _ -> ok
     end.
 
