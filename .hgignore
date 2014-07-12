@@ -11,3 +11,6 @@ glob:.fslckout
 glob:.gitignore
 glob:.git/
 glob:config/
+glob:priv/freenode.cfg
+glob:erl_crash.dump
+glob:priv/yflrss.*
