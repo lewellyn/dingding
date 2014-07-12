@@ -25,8 +25,6 @@
 %% debug exports for testing
 -export([type_and_size/1, get_page_title/1]).
 -export([tinyurl/1]).
--export([trim_whitespace/1]).
-
 
 %% @doc
 %% Prefix is the part that contains the nickname and host on most messages
