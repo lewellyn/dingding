@@ -25,7 +25,7 @@
 %% debug exports for testing
 -export([type_and_size/1, get_page_title/1]).
 -export([tinyurl/1]).
-
+-export([trim_whitespace/1]).
 
 
 %% @doc
@@ -192,7 +192,7 @@ get_page_title(TheUrl) ->
                                         _ -> false
                                     end end, HeadTags),
                     io:format("~p~n",[TitleList]),
-                    hd(TitleList);
+                    hd(TitleList) -- [10];
                 _ -> none
             end;
         ["image", _] ->
@@ -203,3 +203,4 @@ get_page_title(TheUrl) ->
             dd_pdf:get_pdf_info(list_to_binary(Url));
         [] -> none
     end.
+
