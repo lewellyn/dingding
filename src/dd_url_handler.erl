@@ -190,7 +190,7 @@ get_page_title(TheUrl) ->
                                         _ -> false
                                     end end, HeadTags),
                     io:format("~p~n",[TitleList]),
-                    hd(TitleList) -- [10];
+                    hd(TitleList);
                 _ -> none
             end;
         ["image", _] ->
