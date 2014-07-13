@@ -26,7 +26,7 @@
 -export([request_version/2, request_whois/2]).
 -export([ip_to_int/1, int_to_ip/1]).
 -export([bin_to_int/1, int_to_bin/1]).
--export([get_first_public_ip/0]).
+-export([get_first_public_ip/0, remove_crnl/1, trim_ws/1]).
 
 -spec consult_priv_dir_file(string()) -> any().
 consult_priv_dir_file(Filename) ->
@@ -193,6 +193,14 @@ is_not_local_ip({{127,0,0,1},_,_}) ->
 is_not_local_ip(_) ->
     true.
 
+-spec remove_crnl(binary()) -> binary().
+remove_crnl(Bin) ->
+    [ X || <<X>> <= Bin,
+           X =/= 13,
+           X =/= 10 ].
+
+trim_ws(Bin) ->
+    re:replace(Bin, "^\\s+|\\s+$", "", [{return, binary}, global]).
 
 %% ================================
 %% IRC PROTOCOL HELPERS
