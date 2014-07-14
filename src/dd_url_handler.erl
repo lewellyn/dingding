@@ -26,8 +26,6 @@
 -export([type_and_size/1, get_page_title/1]).
 -export([tinyurl/1]).
 
-
-
 %% @doc
 %% Prefix is the part that contains the nickname and host on most messages
 %% Especially PRIVMSG etc.
@@ -192,7 +190,7 @@ get_page_title(TheUrl) ->
                                         _ -> false
                                     end end, HeadTags),
                     io:format("~p~n",[TitleList]),
-                    hd(TitleList);
+                    dd_helpers:trim_ws(hd(TitleList));
                 _ -> none
             end;
         ["image", _] ->
@@ -203,3 +201,4 @@ get_page_title(TheUrl) ->
             dd_pdf:get_pdf_info(list_to_binary(Url));
         [] -> none
     end.
+

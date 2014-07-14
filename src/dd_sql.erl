@@ -101,6 +101,7 @@ prepare_database(Db) ->
     %% need to check whether we actually already have initialized the database.
     case is_database_empty(Db) of
         true ->
+            create_versions_table_if_needed(Db),
             sqlite3:create_table(Db, urls, [{tstamp, integer}, {nick, text}, {url, text}, {title, text}], {unique, [tstamp]}),
             sqlite3:create_table(Db, activity, [{nick, text}, {tstamp, integer}, {channel, text}, {msg, text}], {unique, [nick]});
         false ->
