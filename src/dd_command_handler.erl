@@ -49,6 +49,8 @@ handle_msg(ReplyPid, Prefix, <<"PRIVMSG">>, Args, <<"\\tweet ",Tweet/binary>>) -
     handle_tweet(ReplyPid, Prefix, Args, Tweet);
 handle_msg(ReplyPid, Prefix, <<"PRIVMSG">>, Args, <<"\\retweet ",Tweet/binary>>) ->
     handle_retweet(ReplyPid, Prefix, Args, Tweet);
+handle_msg(ReplyPid, _Prefix, <<"PRIVMSG">>, Args, <<"\\mentions">>) ->
+    dd_twitter:get_mentions(ReplyPid, Args);
 handle_msg(_ReplyPid, _Prefix, _Command, _Args, _Tail) ->
     ok.
 

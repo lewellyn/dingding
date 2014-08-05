@@ -54,15 +54,15 @@ handle_urls(ReplyPid, Prefix, Args, Tail) ->
     ok.
 
 -spec process_url(pid(), binary(), [binary()], binary()) -> ok.
-process_url(P, Prefix, Args, URL) ->
+process_url(P, _Prefix, Args, URL) ->
     %% first of all, get the title, we need it everywhere else anyway.
     Title = get_page_title(URL),
-    dd_sql:store_url(dd_db, dd_ircmsg:nick_from_prefix(Prefix), URL, Title),
+    %% dd_sql:store_url(dd_db, dd_ircmsg:nick_from_prefix(Prefix), URL, Title),
     case byte_size(URL) > 100 of
         true -> dd_connection:reply(P, Args, tinyurl(URL));
         _ -> ok
     end,
-    spawn(fun() -> export_xml_for_url(URL, dd_ircmsg:nick_from_prefix(Prefix), Title) end),
+    %% spawn(fun() -> export_xml_for_url(URL, dd_ircmsg:nick_from_prefix(Prefix), Title) end),
     spawn(fun() -> do_url_funs(P, Args, URL, Title) end),
     ok.
 
@@ -111,25 +111,25 @@ tinyurl(Url) ->
         {ok, {_, _, TinyUrl}} -> TinyUrl
     end.
 
-export_xml_for_url(URL, NickName, Title) ->
-    Nick = binary_to_list(NickName),
-    dd_rss:store_and_publish(case Title of
-                                 none -> binary_to_list(URL);
-                                 ok -> binary_to_list(URL);
-                                 <<"Picture">> -> binary_to_list(URL);
-                                 <<"Video">> -> binary_to_list(URL);
-                                 T -> binary_to_list(T)
-                             end,
-                             case Title of
-                                 <<"Picture">> ->
-                                     AltTitle = "Posted by "++Nick++" in #YFL on "++dd_rss:utcnow(),
-                                     "<img src=\""++binary_to_list(URL)++
-                                         "\" alt=\""++AltTitle++"\" title=\""++AltTitle++"\" />";
-                                 <<"Video">> -> "<video src=\""++binary_to_list(URL)++"\" controls/>";
-                                 _ -> "Posted by "++Nick++" in #YFL on "++dd_rss:utcnow()
-                             end,
-                             binary_to_list(URL)),
-    ok.
+%% export_xml_for_url(URL, NickName, Title) ->
+%%     Nick = binary_to_list(NickName),
+%%     dd_rss:store_and_publish(case Title of
+%%                                  none -> binary_to_list(URL);
+%%                                  ok -> binary_to_list(URL);
+%%                                  <<"Picture">> -> binary_to_list(URL);
+%%                                  <<"Video">> -> binary_to_list(URL);
+%%                                  T -> binary_to_list(T)
+%%                              end,
+%%                              case Title of
+%%                                  <<"Picture">> ->
+%%                                      AltTitle = "Posted by "++Nick++" in #YFL on "++dd_rss:utcnow(),
+%%                                      "<img src=\""++binary_to_list(URL)++
+%%                                          "\" alt=\""++AltTitle++"\" title=\""++AltTitle++"\" />";
+%%                                  <<"Video">> -> "<video src=\""++binary_to_list(URL)++"\" controls/>";
+%%                                  _ -> "Posted by "++Nick++" in #YFL on "++dd_rss:utcnow()
+%%                              end,
+%%                              binary_to_list(URL)),
+%%     ok.
 
 type_and_size(Url) ->
     case string:rstr(Url, ".webm") > 0 of

@@ -48,6 +48,18 @@ reply_with_tweet(Tweet, Pid, Args) ->
           end),
     ok.
 
+get_mentions(ReplyPid, Args) ->
+	%% https://api.twitter.com/1.1/statuses/mentions_timeline.json
+	URL = case application:get_env(last_tweet) of
+			  undefined -> "http://127.0.01:8080/1.1/statuses/mentions_timeline.json";
+			  {ok, LastTweet} -> "http://127.0.01:8080/1.1/statuses/mentions_timeline.json?since_id="++LastTweet
+		  end,
+	JSON = get_with_auth(URL),
+	{struct, Tweets} = mochijson:decode(JSON),
+    [ spawn(fun() -> reply_with_tweet(Tweet, ReplyPid, Args) end)
+      || Tweet <- [ get_usertimeline_tweet(Twt) || Twt <- Tweets ]],
+	ok.
+
 -spec get_tweets(string()) -> [string()].
 get_tweets(JSON) ->
     P = mochijson:decode(JSON),
