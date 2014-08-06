@@ -269,8 +269,9 @@ url_encode([{Key,Value}|R],Acc) ->
 edoc_lib:escape_uri(Value)).
 
 periodic_get_mentions() ->
+	dd_twitter:get_mentions('Freenode',["#yfl"])
 	receive
 	after 1000*60*5 ->
-			dd_twitter:get_mentions('Freenode',["#yfl"])
+			ok
 	end,
 	periodic_get_mentions().
