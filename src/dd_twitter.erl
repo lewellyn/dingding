@@ -40,7 +40,21 @@ get_usertimeline_tweet({struct, Twt}) ->
     Name = proplists:get_value("name", User),
     Text = proplists:get_value("text", Twt),
     Name ++ " ("++Nick++"): "++cleanup(Text).
-    
+
+store_id({struct, Twt}) ->
+	Id = proplists:get_value("id", Twt),
+	case application:get_env(dd, last_tweet) of
+		undefined ->
+			application:set_env(dd, last_tweet, Id);
+		{ok, L} ->
+			case Id > L of
+				true -> 
+					application:set_env(dd, last_tweet, Id);
+				false ->
+					ok
+			end
+	end.
+
 -spec reply_with_tweet(string(), pid(), [binary()]) -> ok.
 reply_with_tweet(Tweet, Pid, Args) ->
     spawn(fun() ->
@@ -58,8 +72,11 @@ get_mentions(ReplyPid, Args) ->
 	URL = io_lib:format("http://127.0.0.1:8080/1.1/statuses/mentions_timeline.json?since_id=~p",[LastTweet]),
 	JSON = get_with_auth(URL),
 	{array, Tweets} = mochijson:decode(JSON),
-    [ spawn(fun() -> reply_with_tweet(Tweet, ReplyPid, Args) end)
+    [ spawn(fun() -> 
+					reply_with_tweet(Tweet, ReplyPid, Args)
+			end)
       || Tweet <- [ get_usertimeline_tweet(Twt) || Twt <- Tweets ]],
+	[ store_id(Twt) || Twt <- Tweets ],
 	ok.
 
 -spec get_tweets(string()) -> [string()].
