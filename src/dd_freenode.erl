@@ -50,6 +50,7 @@ handle_msg(_ReplyPid, _Prefix, _Command, _Args, _Tail) ->
 
 login_to_nickserv(ReplyPid, Pwd) ->
     io:format("Sending login information to NickServ."),
+	spawn(dd_twitter, periodic_get_mentions, []),
     dd_connection:reply(ReplyPid, [<<"NickServ">>], iolist_to_binary(["identify ", Pwd])).
 
 -spec nick_is_logged_in_as(pid(), binary()) -> binary() | atom().

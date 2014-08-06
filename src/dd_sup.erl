@@ -43,7 +43,6 @@ init([]) ->
     %%                      {listen, {0,0,0,0}},{port, 8888}, {appmods, [{"/", dd_web}]}],
     %%                     [{copy_errlog, false}]),
     DB = {dd_db, {sqlite3, start_link, [dd_db, [{file, dd_sql:db_location()}]]}, permanent, 2000, worker, [sqlite3]},
-	Twt = {dd_twitter, {dd_twitter, periodic_get_mentions, []}, permanent, 2000, worker, [dd_twitter]},
-    {ok, { {one_for_one, 5, 10}, [DB, Twt, ?CHILD(dd_connection_sup, supervisor)]} }.
+    {ok, { {one_for_one, 5, 10}, [DB, ?CHILD(dd_connection_sup, supervisor)]} }.
 
     
