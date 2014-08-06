@@ -50,6 +50,7 @@ store_id({struct, Twt}) ->
 		{ok, L} ->
 			case Id > L of
 				true -> 
+					io:format("Storing ~p as last Tweet id~n", [Id]),
 					application:set_env(dd, last_tweet, Id);
 				false ->
 					ok
