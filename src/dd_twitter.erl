@@ -10,6 +10,7 @@
 
 -compile(export_all).
 -export([get_tweet/1, auth_header/0, get_usertimeline_tweet/1, reply_with_tweet/3, get_tweets/1, tweet_to_line/1, tweet/2, is_tweet/1]).
+-export([periodic_get_mentions/0]).
 
 -define(SingleTweetPattern, "https?://twitter.com/(\\w*)/status\\w?\\w?/(\\d*)").
 
@@ -65,11 +66,11 @@ reply_with_tweet(Tweet, Pid, Args) ->
 get_mentions(ReplyPid, Args) ->
 	%% https://api.twitter.com/1.1/statuses/mentions_timeline.json
 	LastTweet = 
-		case application:get_env(last_tweet) of
+		case application:get_env(dd, last_tweet) of
 			undefined -> 1;
 			{ok, L} -> L
 		  end,
-	URL = io_lib:format("http://127.0.0.1:8080/1.1/statuses/mentions_timeline.json?since_id=~p",[LastTweet]),
+	URL = io_lib:format("http://127.0.0.1:8080/1.1/statuses/mentions_timeline.json?count=1&since_id=~p",[LastTweet]),
 	JSON = get_with_auth(URL),
 	{array, Tweets} = mochijson:decode(JSON),
     [ spawn(fun() -> 
@@ -266,4 +267,9 @@ url_encode([{Key,Value}|R],Acc) ->
     url_encode(R, Acc ++ "&" ++ edoc_lib:escape_uri(Key) ++ "=" ++
 edoc_lib:escape_uri(Value)).
 
-%% TODO: ADD RETWEETS -> Get id from url, retweet that ID.
+periodic_get_mentions() ->
+	receive
+	after 1000*60*5 ->
+			dd_twitter:get_mentions('Freenode',["#yfl"])
+	end,
+	periodic_get_mentions().
