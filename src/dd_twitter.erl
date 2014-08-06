@@ -57,7 +57,7 @@ get_mentions(ReplyPid, Args) ->
 		  end,
 	URL = io_lib:format("http://127.0.0.1:8080/1.1/statuses/mentions_timeline.json?since_id=~p",[LastTweet]),
 	JSON = get_with_auth(URL),
-	{struct, Tweets} = mochijson:decode(JSON),
+	{array, Tweets} = mochijson:decode(JSON),
     [ spawn(fun() -> reply_with_tweet(Tweet, ReplyPid, Args) end)
       || Tweet <- [ get_usertimeline_tweet(Twt) || Twt <- Tweets ]],
 	ok.
