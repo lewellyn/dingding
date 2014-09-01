@@ -9,14 +9,10 @@
 -module(dd_twitter).
 
 -compile(export_all).
--export([get_tweet/1, auth_header/0, get_usertimeline_tweet/1, reply_with_tweet/3, get_tweets/1, tweet_to_line/1, tweet/2, is_tweet/1]).
+-export([get_tweet/1, get_usertimeline_tweet/1, reply_with_tweet/3, get_tweets/1, tweet_to_line/1, tweet/2, is_tweet/1]).
 -export([periodic_get_mentions/0]).
 
 -define(SingleTweetPattern, "https?://twitter.com/(\\w*)/status\\w?\\w?/(\\d*)").
-
-get_with_auth(URL) ->
-    {ok, {_,_, JSON}} = httpc:request(get, {URL, [auth_header()]}, [], []),
-    JSON.
 
 get_tweet(TweetID) when is_binary(TweetID) ->
     get_tweet(binary_to_list(TweetID));
@@ -117,10 +113,10 @@ get_tweet_id_from_line(Line) ->
         _ -> false
     end.
 
-retweet_from_url(URL) ->
-    ID = binary_to_list(get_tweet_id_from_line(URL)),
-    retweetpost(ID),
-    ok.
+%% retweet_from_url(URL) ->
+%%     ID = binary_to_list(get_tweet_id_from_line(URL)),
+%%     retweetpost(ID),
+%%     ok.
 
 strt() ->
     application:start(crypto),
@@ -155,24 +151,6 @@ cleanup(Line) ->
                  {NL, " "}
                  ]).
 
-
-post_with_auth(Data) ->
-    Method = post,
-    URL = "http://127.0.0.1:8080/1.1/statuses/update.json",
-    Header = [auth_header()],
-    Type = "application/x-www-form-urlencoded",
-    Body = url_encode(Data),
-    io:format("Body: ~p~n",[Body]),
-    HTTPOptions = [],
-    Options = [],
-    case httpc:request(Method, {URL, Header, Type, Body}, HTTPOptions, Options) of
-        {ok, {_Status, _Headers, RBody}} -> 
-            return_id(RBody);
-        {ok, {_Status, RBody}} -> 
-            return_id(RBody);
-        Other -> 
-            io:format("OTHER REPLY: ~p~n",[Other])
-    end.
 
 nick_allowed_to_tweet(Nickname) when is_binary(Nickname) ->
     nick_allowed_to_tweet(binary_to_list(Nickname));
