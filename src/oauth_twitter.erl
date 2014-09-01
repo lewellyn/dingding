@@ -97,15 +97,24 @@ get_oauth_config() ->
 	{ApiKey, ApiKeySecret, AccessToken, AccessTokenSecret}.
 
 	
+set_oauth_config() ->
+	application:set_env(
+	  dd, oauth, 
+	  [{access_token, "2276777892-rntH5vZXo7N70nvwEdrv3ANC2MZVQhtdoKKBIUa"},
+	   {access_token_secret, "68RPEeI2lDFylW1neMrhumisSJQwoyIciCf6gv8tqNe0k"},
+	   {api_key, "dvQGScioLRGByb4AmDXFw"},
+	   {api_key_secret, "Kb96t1tsxU7MttISD2I7d4FwlLDTEpTP62Lcf6RB0"}]).
 		
 
 get_URL(URL, Params) ->
 	{AK, AKS, AT, ATS}  = get_oauth_config(),
-	oauth:get(URL, Params, {AK, AKS, hmac_sha1}, AT, ATS).
+	{ok, {_Status, _Headers, Body}} = oauth:get(URL, Params, {AK, AKS, hmac_sha1}, AT, ATS),
+	Body.
 
 post_URL(URL, Params) ->
 	{AK, AKS, AT, ATS}  = get_oauth_config(),
-	oauth:post(URL, Params, {AK, AKS, hmac_sha1}, AT, ATS).
+	{ok, {_Status, _Headers, Body}} = oauth:post(URL, Params, {AK, AKS, hmac_sha1}, AT, ATS),
+	Body.
 
 get_favs() ->
 	get_URL("https://api.twitter.com/1.1/favorites/list.json", []).
