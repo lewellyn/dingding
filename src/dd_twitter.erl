@@ -21,18 +21,8 @@ get_with_auth(URL) ->
 get_tweet(TweetID) when is_binary(TweetID) ->
     get_tweet(binary_to_list(TweetID));
 get_tweet(TweetID) ->
-    %% changed password and removed it from the source code. D'oh!.
-    URL = "http://127.0.0.1:8080/1.1/statuses/show.json?id="++TweetID,
-    JSON = get_with_auth(URL),
+	JSON = oauth_twitter:get_tweet(TweetID),
     get_usertimeline_tweet(mochijson:decode(JSON)).
-
-auth_header() ->
-    {ok, [User, Pass]} = application:get_env(dd, supertweet),
-    auth_header(User, Pass).
-
-auth_header(User, Pass) ->
-    Encoded = base64:encode_to_string(lists:append([User,":",Pass])),
-    {"Authorization","Basic " ++ Encoded}.
 
 -spec get_usertimeline_tweet({'struct', [any()]}) -> string().
 get_usertimeline_tweet({struct, Twt}) ->
@@ -65,14 +55,12 @@ reply_with_tweet(Tweet, Pid, Args) ->
     ok.
 
 get_mentions(ReplyPid, Args) ->
-	%% https://api.twitter.com/1.1/statuses/mentions_timeline.json
 	LastTweet = 
 		case application:get_env(dd, last_tweet) of
 			undefined -> 1;
 			{ok, L} -> L
 		  end,
-	URL = io_lib:format("http://127.0.0.1:8080/1.1/statuses/mentions_timeline.json?count=1&since_id=~p",[LastTweet]),
-	JSON = get_with_auth(URL),
+	JSON = oauth_twitter:get_mentions(LastTweet),
 	{array, Tweets} = mochijson:decode(JSON),
     [ spawn(fun() -> 
 					reply_with_tweet(Tweet, ReplyPid, Args)
@@ -97,8 +85,7 @@ tweet_to_line({struct, P}) ->
 
 -spec handle_twitter_usertimeline(pid(), [binary()], binary()) -> ok.
 handle_twitter_usertimeline(ReplyPid, Args, Username) ->
-    URL = "http://127.0.0.1:8080/1.1/statuses/user_timeline.json?count=2&screen_name="++edoc_lib:escape_uri(binary_to_list(Username)),
-    JSON = get_with_auth(URL),
+	JSON = oauth_twitter:get_twitter_user_timeline(binary_to_list(Username)),
     {array, TwtList} = mochijson:decode(JSON),
     [ spawn(fun() -> reply_with_tweet(Tweet, ReplyPid, Args) end)
       || Tweet <- [ get_usertimeline_tweet(Twt) || Twt <- TwtList ]],
@@ -134,13 +121,6 @@ retweet_from_url(URL) ->
     ID = binary_to_list(get_tweet_id_from_line(URL)),
     retweetpost(ID),
     ok.
-
-tst() ->
-    URL = "http://127.0.0.1:8080/1.1/statuses/user_timeline.json?count=2&screen_name=G3rtm",
-    JSON = get_with_auth(URL),
-    io:format("Decoding"),
-    {array, TwtList} = mochijson:decode(JSON),
-    [ get_usertimeline_tweet(Twt) || Twt <- TwtList ].
 
 strt() ->
     application:start(crypto),
@@ -204,9 +184,6 @@ return_id(RBody) ->
     {struct, Tweet} = mochijson:decode(RBody),
     proplists:get_value("id", Tweet).
 
-retweetpost(ID) ->
-    httpc:request(post, {"http://127.0.0.1:8080/1.1/statuses/retweet/"++ID++".json", [auth_header()], "application/x-www-form-urlencoded", []}, [], []).
-
 tweet(Nickname, Text) when is_binary(Nickname) ->
     tweet(binary_to_list(Nickname), Text);
 tweet(Nickname, Text) when is_binary(Text) ->
@@ -217,20 +194,11 @@ tweet(Nickname, Text) ->
         false -> disallowed
     end.
 
-retweet(Nick, TweetID) when is_binary(TweetID) ->
-    retweet(Nick, binary_to_list(TweetID));
-retweet(Nick, ID) ->
-    case nick_allowed_to_tweet(Nick) of
-        true ->
-            httpc:request(post, {"http://127.0.0.1:8080/1.1/statuses/retweet/"++ID++".json", [auth_header()], "application/x-www-form-urlencoded", []}, [], []);
-        _ -> ok
-    end.
+sendtweet(Text) ->
+	sendtweet([], Text).
 
-sendtweet(Nickname, Text) ->
-    Prefix = "<"++Nickname++"> ",
-%%    Max140 = string:substr(Prefix++Text, 1, 140),
-%%    Max140 = Prefix++Text,
-    post_with_auth([{"status", Text},{"trim_user", "true"}]).
+sendtweet(_, Text) ->
+	oauth_twitter:send_tweet(Text).
 
 shorten_urls(Text) ->
     Parts = string:tokens(Text, " "),
