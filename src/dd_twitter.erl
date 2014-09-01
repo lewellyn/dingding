@@ -176,7 +176,8 @@ sendtweet(Text) ->
 	sendtweet([], Text).
 
 sendtweet(_, Text) ->
-	oauth_twitter:send_tweet(Text).
+	oauth_twitter:send_tweet(Text),
+	ok.
 
 shorten_urls(Text) ->
     Parts = string:tokens(Text, " "),
