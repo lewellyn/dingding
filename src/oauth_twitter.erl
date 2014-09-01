@@ -96,16 +96,6 @@ get_oauth_config() ->
 	AccessTokenSecret = proplists:get_value(access_token_secret, P),
 	{ApiKey, ApiKeySecret, AccessToken, AccessTokenSecret}.
 
-	
-set_oauth_config() ->
-	application:set_env(
-	  dd, oauth, 
-	  [{access_token, "2276777892-rntH5vZXo7N70nvwEdrv3ANC2MZVQhtdoKKBIUa"},
-	   {access_token_secret, "68RPEeI2lDFylW1neMrhumisSJQwoyIciCf6gv8tqNe0k"},
-	   {api_key, "dvQGScioLRGByb4AmDXFw"},
-	   {api_key_secret, "Kb96t1tsxU7MttISD2I7d4FwlLDTEpTP62Lcf6RB0"}]).
-		
-
 get_URL(URL, Params) ->
 	{AK, AKS, AT, ATS}  = get_oauth_config(),
 	{ok, {_Status, _Headers, Body}} = oauth:get(URL, Params, {AK, AKS, hmac_sha1}, AT, ATS),
