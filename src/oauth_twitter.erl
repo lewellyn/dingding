@@ -51,10 +51,8 @@
 -compile(export_all).
 
 consumer() ->
-	P = get_oauth_config(),
-	ApiKey = proplists:get_value(api_key, P),
-	ApiKeySecret = proplists:get_value(api_key_secret, P),
-	{ApiKey, ApiKeySecret, hmac_sha1}.
+	{AK, AKS, _AT, _ATS}  = get_oauth_config(),
+	{AK, AKS, hmac_sha1}.
 
 start_apps() ->
 	application:start(crypto),

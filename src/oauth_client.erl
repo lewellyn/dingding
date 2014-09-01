@@ -116,6 +116,7 @@ handle_call({get_access_token, URL, Params, ParamsMethod}, _From, State={Consume
   case oauth_get(ParamsMethod, URL, Params, Consumer, oauth:token(RParams), oauth:token_secret(RParams)) of
     {ok, Response={{_, 200, _}, _, _}} ->
       AParams = oauth:params_decode(Response),
+	  io:format("~p ~p ~p~n",[Consumer, RParams, AParams]),
       {reply, ok, {Consumer, RParams, AParams}};
     {ok, Response} ->
       {reply, Response, State};
