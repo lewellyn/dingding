@@ -31,7 +31,7 @@
 -spec handle_msg(pid(), binary(), binary(), [binary()], binary()) -> ok.
 handle_msg(ReplyPid, Prefix, <<"CTCP">>, _Args, <<"VERSION">>) ->
     Nick = dd_ircmsg:nick_from_prefix(Prefix),
-    dd_connection:send_msg(ReplyPid, <<>>, <<"CTCP_REPLY">>, [Nick], <<"dingding IRC bot http://fossil.gertm.eu/dingding/ ">> ),
+    dd_connection:send_msg(ReplyPid, <<>>, <<"CTCP_REPLY">>, [Nick], <<"dingding IRC bot https://bitbucket.org/gertm/dingding/ ">> ),
     dd_versioncheck:request_version(ReplyPid, Nick),
     ok;
 handle_msg(_ReplyPid, Prefix, <<"CTCP_REPLY">>, _Args, <<"VERSION ", Reply/binary>>) ->
