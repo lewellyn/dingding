@@ -103,7 +103,8 @@ prepare_database(Db) ->
         true ->
             create_versions_table_if_needed(Db),
             sqlite3:create_table(Db, urls, [{tstamp, integer}, {nick, text}, {url, text}, {title, text}], {unique, [tstamp]}),
-            sqlite3:create_table(Db, activity, [{nick, text}, {tstamp, integer}, {channel, text}, {msg, text}], {unique, [nick]});
+            sqlite3:create_table(Db, activity, [{nick, text}, {tstamp, integer}, {channel, text}, {msg, text}], {unique, [nick]}),
+            create_versions_table_if_needed(Db);
         false ->
             ok
     end.
@@ -117,7 +118,7 @@ table_exists(Db, Table) ->
 create_versions_table_if_needed(Db) ->
     case table_exists(Db, versions) of
         true -> ok;
-        false -> 
+        false ->
             sqlite3:create_table(Db, versions, [{nick, text}, {versionreply, text}, {tstamp, integer}], {unique, [nick]})
     end.
 
@@ -143,4 +144,3 @@ list_versions_table() ->
 list_versions_table(Db) ->
     Res = sqlite3:sql_exec(Db, "SELECT * FROM versions"),
     io:format("~p~n",[Res]).
-    
