@@ -48,11 +48,11 @@ get_urls(Bin) ->
 
 -spec http_get(string()) -> any().
 http_get(Url) ->
-    httpc:request(get, {Url, [{"User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0"}]}, [{autoredirect, true}], []).
+    httpc:request(get, {Url, [{"User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0"}]}, [{autoredirect, true}, {relaxed, true}], []).
 
 -spec http_head(string()) -> any().
 http_head(Url) ->
-    httpc:request(head, {Url, [{"User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0"}]}, [{autoredirect, true}], []).
+    httpc:request(head, {Url, [{"User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0"}]}, [{autoredirect, true}, {relaxed, true}], []).
 
 -spec module_exists(module()) -> boolean().
 module_exists(Module) ->
