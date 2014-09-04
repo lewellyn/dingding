@@ -17,3 +17,5 @@ glob:priv/yflrss.*
 glob:*.beam
 glob:.\#*
 glob:src/oauth_config.erl
+glob:priv/*.LOG
+glob:priv/*.DAT
