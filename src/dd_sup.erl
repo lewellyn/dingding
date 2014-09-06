@@ -30,6 +30,7 @@
 %% ===================================================================
 
 start_link() ->
+	io:format("starting main supervisor~n"),
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %% ===================================================================
@@ -42,7 +43,7 @@ init([]) ->
     %%                     [{servername, "sej"}, {auth_log, false},
     %%                      {listen, {0,0,0,0}},{port, 8888}, {appmods, [{"/", dd_web}]}],
     %%                     [{copy_errlog, false}]),
-	dd_db:init(),
+	io:format("initializing"),
     {ok, { {one_for_one, 5, 10}, [?CHILD(dd_connection_sup, supervisor)]} }.
 
     

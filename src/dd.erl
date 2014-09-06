@@ -22,6 +22,7 @@ start() ->
     ensure_started(public_key),
     ensure_started(ssl),
     ensure_started(inets),
+	dd_db:init(),
     ensure_started(dd).
 
 ensure_started(App) ->

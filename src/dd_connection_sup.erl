@@ -75,7 +75,7 @@ init([]) ->
     Cfgs = dd_config:load_config(),
     
     Children = [ {list_to_atom(Cfg#serverconfig.name), {dd_connection, start_link, [Cfg]}, Restart, Shutdown, Type, [dd_connection]} || Cfg <- Cfgs ],
-    io:format("~p~n",[Children]),
+    io:format("Connections: ~p~n",[Children]),
     {ok, {SupFlags, Children}}.
 
 %%%===================================================================

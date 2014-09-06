@@ -30,7 +30,6 @@
 %%                                                             {"#testerlounge", [dd_morning, dd_version, dd_url_handler, dd_le_handler, dd_command_handler]}]}.
 
 load_config() ->
-    {ok, ServerConfigs} = application:get_env(serverconfigs),
-    Db = dd_helpers:get_db_pid(),
-    [ #serverconfig{name=Name, hostname=HostName, port=Port, nick=Nick, channels=Channels, modules=Modules, dbpid=Db}
+    {ok, ServerConfigs} = application:get_env(dd, serverconfigs),
+    [ #serverconfig{name=Name, hostname=HostName, port=Port, nick=Nick, channels=Channels, modules=Modules}
                     || {server, Name, HostName, Port, Nick, Channels, Modules} <- ServerConfigs ].   
