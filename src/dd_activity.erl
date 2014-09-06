@@ -51,14 +51,17 @@ seen_command(ReplyPid, Prefix, Args, SearchString, Msg) ->
     last_seen(ReplyPid, Args, SearchString),
     store_activity(dd_db, Prefix, Channel, Msg).    
 
-store_activity(Pid, Prefix, Channel, Msg) ->
-    dd_sql:store_activity(Pid, dd_ircmsg:nick_from_prefix(Prefix), Channel, Msg).
+store_activity(_Pid, Prefix, Channel, Msg) ->
+	dd_db:store_activity(dd_ircmsg:nick_from_prefix(Prefix),
+						 Channel,
+						 Msg),
+	ok.
 
 last_seen(Pid, Args, SearchString) ->
-    case dd_sql:last_activity_for_nick(dd_db, SearchString) of
-        [{columns,["nick", "tstamp", "channel", "msg"]}, {rows, [{Nick, Stamp, Channel, Msg}]}] ->
-            Duration = dd_helpers:pptimediff(dd_helpers:diff2now(Stamp)),
-            dd_connection:reply(Pid, Args,
-                                iolist_to_binary([Nick, <<" was last seen on ">>, Channel,<<" ">>,Duration, <<"ago: ">>,Msg]));
-        _ -> dd_connection:reply(Pid, Args, iolist_to_binary([<<"No record of ">>, SearchString]))
-    end.
+	case dd_db:last_activity_for_nick(SearchString) of
+		{TS, Chan, Msg} ->	
+			Duration = dd_helpers:pptimediff(dd_helpers:diff2now(TS)),
+			dd_connection:reply(Pid, Args, iolist_to_binary([SearchString, <<" was last seen on ">>, Chan,<<" ">>,Duration, <<"ago: ">>, Msg]));
+		undefined ->
+			dd_connection:reply(Pid, Args, iolist_to_binary([<<"No record of ">>, SearchString]))
+	end.

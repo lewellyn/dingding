@@ -42,7 +42,7 @@ init([]) ->
     %%                     [{servername, "sej"}, {auth_log, false},
     %%                      {listen, {0,0,0,0}},{port, 8888}, {appmods, [{"/", dd_web}]}],
     %%                     [{copy_errlog, false}]),
-    DB = {dd_db, {sqlite3, start_link, [dd_db, [{file, dd_sql:db_location()}]]}, permanent, 2000, worker, [sqlite3]},
-    {ok, { {one_for_one, 5, 10}, [DB, ?CHILD(dd_connection_sup, supervisor)]} }.
+	dd_db:init(),
+    {ok, { {one_for_one, 5, 10}, [?CHILD(dd_connection_sup, supervisor)]} }.
 
     
