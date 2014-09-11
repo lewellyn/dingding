@@ -1,3 +1,5 @@
+%-*-Mode:erlang;coding:utf-8;tab-width:4;c-basic-offset:4;indent-tabs-mode:()-*-
+% ex: set ft=erlang fenc=utf-8 sts=4 ts=4 sw=4 et:
 %% Copyright 2012-2013 Gert Meulyzer
 
 %% Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +26,7 @@
 -include("../include/dd_irc.hrl").
 
 -define(COLON, 58).
+-define(NEWLINE, "\r\n").
 -define(VERBOSE, yes).
 
 %% API
@@ -207,6 +210,62 @@ handle_cast(_Msg, State) ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
+%% Do appropriate pre-registration login.
+%%
+%% @spec do_server_login(Sock, UserName, Pass, Sasl, NickServ) ->
+%%                                   void()
+%% @end
+%%--------------------------------------------------------------------
+do_server_login(Sock, _, true, _) ->
+    %% Do SASL Authentication if requested.
+    %% https://github.com/atheme/charybdis/blob/master/doc/sasl.txt
+    gen_tcp:send(Sock, "CAP REQ :sasl"),
+    gen_tcp:send(Sock, ?NEWLINE);
+
+do_server_login(Sock, Pass, false, false) ->
+    %% Do Password login if no SASL or NickServ login.
+    gen_tcp:send(Sock, "PASS "),
+    gen_tcp:send(Sock, Pass),
+    gen_tcp:send(Sock, ?NEWLINE);
+
+do_server_login(Sock, _, _, _) ->
+    gen_tcp:send(Sock, ?NEWLINE).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Do appropriate post-registration login.
+%%
+%% @spec do_final_login(Sock, UserName, Pass, Sasl, NickServ) ->
+%%                                   void()
+%% @end
+%%--------------------------------------------------------------------
+do_final_login(Sock, UserName, Pass, true, _) ->
+    %% SASL
+    gen_tcp:send(Sock, "AUTHENTICATE PLAIN"),
+    gen_tcp:send(Sock, ?NEWLINE),
+    gen_tcp:send(Sock, "AUTHENTICATE "),
+    %% TODO: SASL uses the *account* name, not the nick. Assuming for now that they're the same.
+    gen_tcp:send(Sock, base64:encode_to_string(UserName++"\0"++UserName++"\0"++Pass)),
+    gen_tcp:send(Sock, ?NEWLINE),
+    %% Here, we need to wait until authentication is complete. Timeout is arbitrary.
+    %% TODO: Since I've not gotten that far, I'm just sleeping. :P
+    timer:sleep(10000),
+    gen_tcp:send(Sock, "CAP END"),
+    gen_tcp:send(Sock, ?NEWLINE);
+
+do_final_login(Sock, UserName, Pass, false, true) ->
+    %% NickServ login
+    gen_tcp:send(Sock, "PRIVMSG NickServ :IDENTIFY "++UserName++" "++Pass++?NEWLINE),
+    %% Give NickServ a few (arbitrary) seconds to identify before joining channels.
+    timer:sleep(10000);
+
+do_final_login(Sock, _, _, _, _) ->
+    gen_tcp:send(Sock, ?NEWLINE).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
 %% Handling all non call/cast messages
 %%
 %% @spec handle_info(Info, State) -> {noreply, State} |
@@ -214,13 +273,16 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(timeout, #state{serverconfig=#serverconfig{hostname=Host, port=Port, nick=UserName}=ServerCfg}) ->    
+handle_info(timeout, #state{serverconfig=#serverconfig{hostname=Host, port=Port, nick=UserName, pass=Pass, sasl=Sasl, nickserv=NickServ, ssl=Ssl}=ServerCfg}) ->    
     {ok, Sock} = gen_tcp:connect(Host, Port, [binary, {packet, line}, {active, once}]),
+
     %% Do the IRC login
+    do_server_login(Sock, Pass, Sasl, NickServ),
     gen_tcp:send(Sock, "NICK "++UserName),
     gen_tcp:send(Sock, "\r\n"),
     gen_tcp:send(Sock, "USER "++UserName++" "++UserName++" "++UserName++" "++UserName),
     gen_tcp:send(Sock, "\r\n"),
+    do_final_login(Sock, UserName, Pass, Sasl, NickServ),
 
     %% spawn the helper process to keep pinging the server.
     %% needs to be its own module probably.
@@ -297,7 +359,7 @@ addm2c(ModuleName, Channel, ServerConfig) ->
         false ->
             ServerConfig
     end.
-        
+
 -spec remmod4chan(atom(), string(), serverconfig()) -> serverconfig().
 remmod4chan(ModuleName, Channel, ServerConfig) ->
     Channels = ServerConfig#serverconfig.channels,
@@ -326,11 +388,12 @@ handle(#ircmsg{prefix=_P, command=_C, arguments=_A, tail=_T}=Msg, #state{serverc
 join_channels(#state{serverconfig=#serverconfig{channels=Channels}}=State) ->
     io:format("Joining channels!"),
     [ case Channel of
-          {X, _} -> 
-              gen_server:cast(self(), {send_raw, iolist_to_binary([<<"JOIN ">>, X])});
-          X ->  
-              gen_server:cast(self(), {send_raw, iolist_to_binary([<<"JOIN ">>, X])}) 
-      end || Channel <- Channels ],
+            {X, _} -> 
+                gen_server:cast(self(), {send_raw, iolist_to_binary([<<"JOIN ">>, X])});
+            X ->  
+                gen_server:cast(self(), {send_raw, iolist_to_binary([<<"JOIN ">>, X])}) 
+        end || Channel <- Channels ],
+    spawn(dd_twitter, periodic_get_mentions, []),
     {ok, State}.
 
 %% @doc

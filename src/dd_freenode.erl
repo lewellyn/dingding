@@ -20,22 +20,9 @@
 -module(dd_freenode).
 -behaviour(dd_msghandler).
 -include("../include/dd_irc.hrl").
--export([handle_msg/5, login_to_nickserv/2, nick_is_logged_in_as/2]).
+-export([handle_msg/5, nick_is_logged_in_as/2]).
 
-%%--------------------------------------------------------------------
-%% @doc
-%% This will crash when the freenode config isn't present.
-%% It's not a big deal, the bot just won't be logged in.
-%% @end
-%%--------------------------------------------------------------------
 -spec handle_msg(pid(), binary(), binary(), [binary()], binary()) -> ok.
-handle_msg(ReplyPid, _Prefix, <<"001">>, _Args, _Tail) ->
-    FreenodeConfig = dd_helpers:consult_priv_dir_file("freenode.cfg"),
-    case proplists:get_value(nickservpass, FreenodeConfig, undefined) of
-        undefined -> io:format("Couldn't read freenode config!~n");
-        Pass -> login_to_nickserv(ReplyPid, Pass)
-    end,
-    ok;
 handle_msg(_ReplyPid, _Prefix, <<"330">>, [_, Nick, Login], <<"is logged in as">>) ->
     ets:insert(logindata, {Nick, freenode, Login}),
     ok;
@@ -47,11 +34,6 @@ handle_msg(_ReplyPid, Prefix, <<"NICK">>, _Args, <<_Rest/binary>>) ->
     remove_nick(Prefix);
 handle_msg(_ReplyPid, _Prefix, _Command, _Args, _Tail) ->
     ok.
-
-login_to_nickserv(ReplyPid, Pwd) ->
-    io:format("Sending login information to NickServ."),
-	spawn(dd_twitter, periodic_get_mentions, []),
-    dd_connection:reply(ReplyPid, [<<"NickServ">>], iolist_to_binary(["identify ", Pwd])).
 
 -spec nick_is_logged_in_as(pid(), binary()) -> binary() | atom().
 nick_is_logged_in_as(ReplyPid, Nick) ->
