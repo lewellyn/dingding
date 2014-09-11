@@ -1,3 +1,5 @@
+%-*-Mode:erlang;coding:utf-8;tab-width:4;c-basic-offset:4;indent-tabs-mode:()-*-
+% ex: set ft=erlang fenc=utf-8 sts=4 ts=4 sw=4 et:
 %%% @author Gert Meulyzer <@G3rtm on Twitter>
 %%% @copyright (C) 2014, Gert Meulyzer
 %%% @doc
@@ -17,7 +19,7 @@
 get_tweet(TweetID) when is_binary(TweetID) ->
     get_tweet(binary_to_list(TweetID));
 get_tweet(TweetID) ->
-	JSON = oauth_twitter:get_tweet(TweetID),
+    JSON = oauth_twitter:get_tweet(TweetID),
     get_usertimeline_tweet(mochijson:decode(JSON)).
 
 -spec get_usertimeline_tweet({'struct', [any()]}) -> string().
@@ -28,16 +30,16 @@ get_usertimeline_tweet({struct, Twt}) ->
     Text = proplists:get_value("text", Twt),
     Name ++ " ("++Nick++"): "++cleanup(Text).
 
-store_id({struct, Twt}) ->
+store_mention_id({struct, Twt}) ->
 	Id = proplists:get_value("id", Twt),
-	case application:get_env(dd, last_tweet) of
+	case application:get_env(dd, last_mention) of
 		undefined ->
-			application:set_env(dd, last_tweet, Id);
+			application:set_env(dd, last_mention, Id);
 		{ok, L} ->
 			case Id > L of
 				true -> 
-					io:format("Storing ~p as last Tweet id~n", [Id]),
-					application:set_env(dd, last_tweet, Id);
+					io:format("Storing ~p as last Mention id~n", [Id]),
+					application:set_env(dd, last_mention, Id);
 				false ->
 					ok
 			end
@@ -50,20 +52,25 @@ reply_with_tweet(Tweet, Pid, Args) ->
           end),
     ok.
 
-get_mentions(ReplyPid, Args) ->
-	LastTweet = 
-		case application:get_env(dd, last_tweet) of
-			undefined -> 1;
-			{ok, L} -> L
-		  end,
-	JSON = oauth_twitter:get_mentions(LastTweet),
-	{array, Tweets} = mochijson:decode(JSON),
+get_mentions() ->
+    {ok, TwitterMentions} = application:get_env(dd, twitter_mentions),
+
+    LastMention = 
+                  case application:get_env(dd, last_mention) of
+        undefined -> 1;
+        {ok, L} -> L
+    end,
+    JSON = oauth_twitter:get_mentions(LastMention),
+    {array, Tweets} = mochijson:decode(JSON),
     [ spawn(fun() -> 
-					reply_with_tweet(Tweet, ReplyPid, Args)
-			end)
-      || Tweet <- [ get_usertimeline_tweet(Twt) || Twt <- Tweets ]],
-	[ store_id(Twt) || Twt <- Tweets ],
-	ok.
+                    reply_with_tweet(Tweet, ReplyPid, [unicode:characters_to_binary(Args)])
+            end)
+     || Tweet <- [ get_usertimeline_tweet(Twt) || Twt <- Tweets ],
+        {ReplyPid, Channels} <- TwitterMentions,
+        Args <- Channels
+       ],
+    [ store_mention_id(Twt) || Twt <- Tweets ],
+    ok.
 
 -spec get_tweets(string()) -> [string()].
 get_tweets(JSON) ->
@@ -215,7 +222,7 @@ url_encode([{Key,Value}|R],Acc) ->
 edoc_lib:escape_uri(Value)).
 
 periodic_get_mentions() ->
-	dd_twitter:get_mentions('Freenode',["#yfl"]),
+    dd_twitter:get_mentions(),
 	receive
 	after 1000*60*5 ->
 			ok
