@@ -19,3 +19,5 @@ glob:.\#*
 glob:src/oauth_config.erl
 glob:priv/*.LOG
 glob:priv/*.DAT
+glob:*~
+glob:*.sw[a-p]
