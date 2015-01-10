@@ -190,7 +190,7 @@ get_page_title(TheUrl) ->
                                         _ -> false
                                     end end, HeadTags),
                     io:format("~p~n",[TitleList]),
-                    dd_helpers:trim_ws(hd(TitleList));
+                    dd_helpers:trim_ws(dd_helpers:cleanup_html_entities(hd(TitleList)));
                 _ -> none
             end;
         ["image", _] ->
