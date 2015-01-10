@@ -219,16 +219,15 @@ handle_cast(_Msg, State) ->
 do_server_login(Sock, _, true, _) ->
     %% Do SASL Authentication if requested.
     %% https://github.com/atheme/charybdis/blob/master/doc/sasl.txt
+    io:format("Starting SASL authentication.~n"),
     gen_tcp:send(Sock, "CAP REQ :sasl"),
     gen_tcp:send(Sock, ?NEWLINE);
 
 do_server_login(Sock, Pass, false, false) ->
     %% Do Password login if no SASL or NickServ login.
+    io:format("Doing server password authentication.~n"),
     gen_tcp:send(Sock, "PASS "),
     gen_tcp:send(Sock, Pass),
-    gen_tcp:send(Sock, ?NEWLINE);
-
-do_server_login(Sock, _, _, _) ->
     gen_tcp:send(Sock, ?NEWLINE).
 
 %%--------------------------------------------------------------------
@@ -242,6 +241,7 @@ do_server_login(Sock, _, _, _) ->
 %%--------------------------------------------------------------------
 do_final_login(Sock, UserName, Pass, true, _) ->
     %% SASL
+    io:format("Finishing SASL authentication.~n"),
     gen_tcp:send(Sock, "AUTHENTICATE PLAIN"),
     gen_tcp:send(Sock, ?NEWLINE),
     gen_tcp:send(Sock, "AUTHENTICATE "),
@@ -256,6 +256,7 @@ do_final_login(Sock, UserName, Pass, true, _) ->
 
 do_final_login(Sock, UserName, Pass, false, true) ->
     %% NickServ login
+    io:format("Doing NickServ password authentication.~n"),
     gen_tcp:send(Sock, "PRIVMSG NickServ :IDENTIFY "++UserName++" "++Pass++?NEWLINE),
     %% Give NickServ a few (arbitrary) seconds to identify before joining channels.
     timer:sleep(10000);
@@ -273,16 +274,28 @@ do_final_login(Sock, _, _, _, _) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(timeout, #state{serverconfig=#serverconfig{hostname=Host, port=Port, nick=UserName, pass=Pass, sasl=Sasl, nickserv=NickServ, ssl=Ssl}=ServerCfg}) ->    
+handle_info(timeout, #state{serverconfig=#serverconfig{name=Network, hostname=Host, port=Port, nick=UserName, pass=Pass, sasl=Sasl, nickserv=NickServ, ssl=Ssl}=ServerCfg}) ->    
     {ok, Sock} = gen_tcp:connect(Host, Port, [binary, {packet, line}, {active, once}]),
 
     %% Do the IRC login
-    do_server_login(Sock, Pass, Sasl, NickServ),
+    io:format("Logging into ~s (~s:~B). SSL: ~s~n", [Network, Host, Port, Ssl]),
+    if
+        Pass == false ->
+            io:format("No server authentication requested.~n");
+        true ->
+            do_server_login(Sock, Pass, Sasl, NickServ)
+    end,
     gen_tcp:send(Sock, "NICK "++UserName),
     gen_tcp:send(Sock, "\r\n"),
     gen_tcp:send(Sock, "USER "++UserName++" "++UserName++" "++UserName++" "++UserName),
     gen_tcp:send(Sock, "\r\n"),
-    do_final_login(Sock, UserName, Pass, Sasl, NickServ),
+    if
+        Pass == false ->
+            io:format("No final server authentication required.~n");
+        true ->
+            do_final_login(Sock, UserName, Pass, Sasl, NickServ)
+    end,
+    io:format("Connected to ~s as ~s.~n", [Network, UserName]),
 
     %% spawn the helper process to keep pinging the server.
     %% needs to be its own module probably.
@@ -386,7 +399,7 @@ handle(#ircmsg{prefix=_P, command=_C, arguments=_A, tail=_T}=Msg, #state{serverc
     {ok, State}.
 
 join_channels(#state{serverconfig=#serverconfig{channels=Channels}}=State) ->
-    io:format("Joining channels!"),
+    io:format("Joining channels!~n"),
     [ case Channel of
             {X, _} -> 
                 gen_server:cast(self(), {send_raw, iolist_to_binary([<<"JOIN ">>, X])});

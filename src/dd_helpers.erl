@@ -26,7 +26,7 @@
 -export([request_version/2, request_whois/2]).
 -export([ip_to_int/1, int_to_ip/1]).
 -export([bin_to_int/1, int_to_bin/1]).
--export([get_first_public_ip/0, remove_crnl/1, trim_ws/1]).
+-export([get_first_public_ip/0, remove_crnl/1, cleanup_html_entities/1, trim_ws/1]).
 
 -spec consult_priv_dir_file(string()) -> any().
 consult_priv_dir_file(Filename) ->
@@ -198,6 +198,27 @@ remove_crnl(Bin) ->
     [ X || <<X>> <= Bin,
            X =/= 13,
            X =/= 10 ].
+
+cleanup_html_entities(Line) ->
+    {ok, LF} = re:compile("\r", [caseless]),
+    {ok, NL} = re:compile("\n", [caseless]),
+    {ok, Gt} = re:compile("&gt;", [caseless]),
+    {ok, Lt} = re:compile("&lt;", [caseless]),
+    {ok, Amp} = re:compile("&amp;", [caseless]),
+    {ok, Quot} = re:compile("&quot;", [caseless]),
+    {ok, Apos} = re:compile("&apos;", [caseless]),
+    lists:foldl(fun({Rgx,Repl}, Acc) -> 
+                        re:replace(Acc, Rgx, Repl, [{return, list}, global]) 
+                end, 
+                Line, 
+                [{Amp, "\\&"},
+                 {Gt, ">"},
+                 {Lt, "<"},
+                 {Quot, "\""},
+                 {Apos, "'"},
+                 {LF, " "},
+                 {NL, " "}
+                 ]).
 
 trim_ws(Bin) ->
     re:replace(Bin, "^\\s+|\\s+$", "", [{return, binary}, global]).

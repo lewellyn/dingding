@@ -1,3 +1,5 @@
+%-*-Mode:erlang;coding:utf-8;tab-width:4;c-basic-offset:4;indent-tabs-mode:()-*-
+% ex: set ft=erlang fenc=utf-8 sts=4 ts=4 sw=4 et:
 %% Copyright 2012 Gert Meulyzer
 
 %% Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +26,7 @@
 
 start(Sock, Pid) ->
     receive
-    after 15000 ->
+    after 30000 ->
             ping_server(Sock, Pid)
     end.
 

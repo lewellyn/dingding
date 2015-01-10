@@ -26,7 +26,7 @@ get_usertimeline_tweet({struct, Twt}) ->
     Nick = proplists:get_value("screen_name", User),
     Name = proplists:get_value("name", User),
     Text = proplists:get_value("text", Twt),
-    Name ++ " ("++Nick++"): "++cleanup(Text).
+    Name ++ " ("++Nick++"): "++ dd_helpers:cleanup_html_entities(Text).
 
 store_id({struct, Twt}) ->
 	Id = proplists:get_value("id", Twt),
@@ -129,28 +129,6 @@ test_tweetpattern() ->
     {ok, Regex} = re:compile(?SingleTweetPattern, [caseless]),
     URL = "https://twitter.com/dibblego/statuses/420118599525617664",
     re:run(URL, Regex, [{capture, all_but_first, binary}]).
-
-cleanup(Line) ->
-    {ok, LF} = re:compile("\r", [caseless]),
-    {ok, NL} = re:compile("\n", [caseless]),
-    {ok, Gt} = re:compile("&gt;", [caseless]),
-    {ok, Lt} = re:compile("&lt;", [caseless]),
-    {ok, Amp} = re:compile("&amp;", [caseless]),
-    {ok, Quot} = re:compile("&quot;", [caseless]),
-    {ok, Apos} = re:compile("&apos;", [caseless]),
-    lists:foldl(fun({Rgx,Repl}, Acc) -> 
-                        re:replace(Acc, Rgx, Repl, [{return, list}, global]) 
-                end, 
-                Line, 
-                [{Amp, "\\&"},
-                 {Gt, ">"},
-                 {Lt, "<"},
-                 {Quot, "\""},
-                 {Apos, "'"},
-                 {LF, " "},
-                 {NL, " "}
-                 ]).
-
 
 nick_allowed_to_tweet(Nickname) when is_binary(Nickname) ->
     nick_allowed_to_tweet(binary_to_list(Nickname));
