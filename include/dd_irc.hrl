@@ -15,7 +15,7 @@
                  tail = <<>>}).
 
 -record(serverconfig, {name="unnamed",
-                       hostname,
+                       hostname="chat.freenode.net",
                        port=6667,
                        nick="dingd1ng",
                        pass=false,
