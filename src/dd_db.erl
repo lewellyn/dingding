@@ -1,3 +1,5 @@
+%-*-Mode:erlang;coding:utf-8;tab-width:4;c-basic-offset:4;indent-tabs-mode:()-*-
+% ex: set ft=erlang fenc=utf-8 sts=4 ts=4 sw=4 et:
 %% Copyright 2014 Gert Meulyzer
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -30,6 +32,7 @@
 -record(dd_versions, {nick, versionreply, timestamp}).
 -record(dd_urls, {url, nick, timestamp, title}).
 -record(dd_activity, {nick, timestamp, channel, msg}).
+-record(dd_twitter, {last_mention}).
 
 init() ->
     application:set_env(mnesia, dir, code:priv_dir(dd)),
@@ -37,12 +40,13 @@ init() ->
     Tables = mnesia:system_info(tables),
     case {lists:member(dd_versions, Tables),
           lists:member(dd_urls, Tables),
-          lists:member(dd_activity, Tables)} of
-        {true,true,true} -> ok;
+          lists:member(dd_activity, Tables),
+          lists:member(dd_twitter, Tables)} of
+        {true,true,true,true} -> ok;
         _ -> create_tables()
     end,
     application:start(mnesia),
-    mnesia:wait_for_tables([dd_versions, dd_urls, dd_activity], 10000).
+    mnesia:wait_for_tables([dd_versions, dd_urls, dd_activity, dd_twitter], 10000).
 
 create_tables() ->
     application:stop(mnesia),
@@ -59,8 +63,11 @@ create_tables() ->
     Activity = mnesia:create_table(dd_activity,
                                    [{attributes, record_info(fields, dd_activity)},
                                     {disc_only_copies, [node()]}]),
+    Twitter = mnesia:create_table(dd_twitter,
+                                  [{attributes, record_info(fields, dd_twitter)},
+                                   {disc_copies, [node()]}]),
     application:stop(mnesia),
-    {Versions, Urls, Activity}.
+    {Versions, Urls, Activity, Twitter}.
 
 %% functions to add data to the db.
 
@@ -93,6 +100,10 @@ store_version(Nick, Version) ->
                      timestamp=Timestamp},
     {atomic, ok} = mnesia:transaction(fun() -> mnesia:write(R) end).
 
+store_twitter_mentions(Id) ->
+    R = #dd_twitter{last_mention=Id},
+    {atomic, ok} = mnesia:transaction(fun() -> mnesia:write(R) end).
+
 %%--------------------------------------------------------------------
 %% @doc
 %% Gets the last activity for this nick.
@@ -110,3 +121,16 @@ last_activity_for_nick(Nick) ->
         Other -> io:format("last_activity got strange value: ~p~n",[Other]),
                  undefined
     end.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Gets the last mention ID.
+%% @end
+%%--------------------------------------------------------------------
+%%last_mention() ->
+    %%case #dd_twitter{last_mention} <- mnesia:table(dd_twitter) of
+        %%[R] -> {R#dd_activity.timestamp} ;
+        %%[] -> undefined;
+        %%Other -> io:format("last_mention got strange value: ~p~n",[Other]),
+                 %%undefined
+    %%end.
